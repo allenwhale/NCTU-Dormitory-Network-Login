@@ -34,25 +34,17 @@ def need_login():
 
 def login(args):
     log('login as', args.username)
-    payload = {
-        'username': args.username,
-        'password': base64.b64encode(args.password.encode())
-    }
-    r = requests.post('http://www.nctu.edu.tw/auth/', data=payload)
-    body = json.loads(r.json()['body'])
-    if r.status_code == 200 and body['status'] == 'Enable':
-        return True
-    else:
-        return False
+    r = requests.get('http://www.nctu.edu.tw/fgtauth')
+    r.encoding = 'utf-8'
+    soup = bs4(r.text)
+    payload = {x.get('name'): x.get('value') for x in soup.find_all('input') if x.get('name')}
+    payload['username'] = args.username
+    payload['password'] = args.password
+    r = requests.post('http://www.nctu.edu.tw/fgtauth/', data=payload)
 
 def logout():
     log('logout')
     r = requests.post('http://140.113.178.244/unauth/', data={})
-    body = json.loads(r.json()['body'])
-    if r.status_code == 200 and body['status'] == 'Disable':
-        return True
-    else:
-        return False
 
 if __name__ == '__main__':
     args = parse_args()
